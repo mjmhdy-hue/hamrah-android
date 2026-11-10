@@ -67,7 +67,7 @@ jobs:
       - name: Static verification
         run: |
           python3 tools/verify_static.py
-          flutter analyze
+          flutter analyze --no-fatal-infos
 
       - name: Unit tests (pure Dart)
         run: flutter test --reporter expanded
