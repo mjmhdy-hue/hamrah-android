@@ -72,18 +72,18 @@ jobs:
       - name: Unit tests (pure Dart)
         run: flutter test --reporter expanded
 
-      - name: Build release APK
-        run: flutter build apk --release
+      - name: Build release APK (arm64 only, small download)
+        run: flutter build apk --release --target-platform android-arm64 --split-per-abi
 
       - name: Collect artifact
         run: |
           set -e
-          cp build/app/outputs/flutter-apk/app-release.apk hamrah-${{ github.run_number }}.apk
-          ls -lh hamrah-${{ github.run_number }}.apk
-          sha256sum hamrah-${{ github.run_number }}.apk | tee hamrah.sha256
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk hamrah-arm64-${{ github.run_number }}.apk
+          ls -lh hamrah-arm64-${{ github.run_number }}.apk
+          sha256sum hamrah-arm64-${{ github.run_number }}.apk | tee hamrah.sha256
           python3 - <<'EOF'
           import zipfile, glob
-          p = glob.glob("hamrah-*.apk")[0]
+          p = glob.glob("hamrah-arm64-*.apk")[0]
           z = zipfile.ZipFile(p)
           names = z.namelist()
           need = ["AndroidManifest.xml", "classes.dex", "lib/arm64-v8a/libflutter.so", "lib/arm64-v8a/libapp.so"]
@@ -103,5 +103,5 @@ jobs:
             Release APK built by GitHub Actions from `${{ github.sha }}`.
             Debug-key signed (sideload only). sha256 in `hamrah.sha256`.
           files: |
-            hamrah-${{ github.run_number }}.apk
+            hamrah-arm64-${{ github.run_number }}.apk
             hamrah.sha256
