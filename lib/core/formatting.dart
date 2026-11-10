@@ -141,6 +141,9 @@ class JalaliMath {
     return Jalali(year, month, day);
   }
 
+  static String monthLabel(int year, int month) =>
+      '${_months[month - 1]} ${faDigits(year.toString())}';
+
   static const monthNames = _months;
   static const weekdayNames = _weekdays;
 }
