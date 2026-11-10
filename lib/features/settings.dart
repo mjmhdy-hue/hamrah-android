@@ -30,7 +30,7 @@ class SettingsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsStreamProvider).valueOrNull ?? const <String, String>{};
+    final settings = ref.watch(settingsStreamProvider).asData?.value ?? const <String, String>{};
     final dates = ref.watch(datesProvider);
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
@@ -114,7 +114,7 @@ class SettingsPage extends ConsumerWidget {
                 title: const Text('صندوق پیامک‌های ناشناس'),
                 subtitle: const Text('پیامک‌های فرستندهٔ تأییدشده که قالبشان پشتیبانی نمی‌شود'),
                 trailing: Consumer(builder: (context, ref, _) {
-                  final count = ref.watch(unrecognizedCountProvider).valueOrNull ?? 0;
+                  final count = ref.watch(unrecognizedCountProvider).asData?.value ?? 0;
                   return Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [

@@ -229,7 +229,7 @@ class _TransactionSheetState extends ConsumerState<_TransactionSheet> {
           _categoryId = row.tx.categoryId;
         }
         final tx = row.tx;
-        final categories = ref.watch(categoriesProvider).valueOrNull ?? const <Category>[];
+        final categories = ref.watch(categoriesProvider).asData?.value ?? const <Category>[];
         final relevant = categories.where((c) => c.type == (tx.direction == 'in' ? 'income' : 'expense')).toList();
         return Padding(
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
@@ -331,7 +331,7 @@ class _TransactionSheetState extends ConsumerState<_TransactionSheet> {
   }
 
   String formatMoneyShort(int rial) {
-    final unit = ref.read(settingsStreamProvider).valueOrNull?['display_unit'] ?? 'toman';
+    final unit = ref.read(settingsStreamProvider).asData?.value?['display_unit'] ?? 'toman';
     return unit == 'rial' ? '${faDigits(grouped(rial))} ریال' : '${faDigits(grouped(rial ~/ 10))} تومان';
   }
 
