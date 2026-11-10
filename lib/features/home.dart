@@ -18,9 +18,9 @@ class HomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dates = ref.watch(datesProvider);
     final accounts = ref.watch(accountsProvider);
-    final pending = ref.watch(pendingCountProvider).valueOrNull ?? 0;
-    final unrecognized = ref.watch(unrecognizedCountProvider).valueOrNull ?? 0;
-    final reminders = ref.watch(remindersProvider).valueOrNull ?? const [];
+    final pending = ref.watch(pendingCountProvider).asData?.value ?? 0;
+    final unrecognized = ref.watch(unrecognizedCountProvider).asData?.value ?? 0;
+    final reminders = ref.watch(remindersProvider).asData?.value ?? const [];
     final finance = ref.watch(financeRepoProvider);
 
     final todayReminders = reminders.where((item) {
