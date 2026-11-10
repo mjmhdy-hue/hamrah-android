@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">همراه</string>
+    <string name="channel_tx_name">تراکنش بانکی</string>
+    <string name="channel_tx_desc">اعلان تراکنش‌های شناسایی‌شده از پیامک بانک</string>
+    <string name="channel_reminder_name">یادآورها</string>
+    <string name="channel_reminder_desc">یادآوری کارهای زمان‌بندی‌شده</string>
+    <string name="amount_hidden">مبلغ پنهان است</string>
+</resources>
