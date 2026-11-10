@@ -34,7 +34,7 @@ class UnitScope extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final unit = unitFrom(ref.watch(settingsStreamProvider).valueOrNull);
+    final unit = unitFrom(ref.watch(settingsStreamProvider).asData?.value);
     return builder(context, unit);
   }
 }
@@ -57,8 +57,8 @@ class AmountText extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final unit = unitFrom(ref.watch(settingsStreamProvider).valueOrNull);
-    final hide = ref.watch(settingsStreamProvider).valueOrNull?['hide_amounts_always'] == '1';
+    final unit = unitFrom(ref.watch(settingsStreamProvider).asData?.value);
+    final hide = ref.watch(settingsStreamProvider).asData?.value?['hide_amounts_always'] == '1';
     final theme = Theme.of(context);
     final color = direction == 'in' ? HamrahColors.income : HamrahColors.expense;
     final base = style ?? (large ? theme.textTheme.headlineSmall : theme.textTheme.titleMedium);
@@ -82,7 +82,7 @@ class AmountPlain extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final unit = unitFrom(ref.watch(settingsStreamProvider).valueOrNull);
+    final unit = unitFrom(ref.watch(settingsStreamProvider).asData?.value);
     return Text(
       formatMoney(rial, unit: unit),
       style: (style ?? Theme.of(context).textTheme.titleMedium)?.copyWith(color: color),
