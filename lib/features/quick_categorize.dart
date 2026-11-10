@@ -130,7 +130,7 @@ class _QuickCategorizePageState extends ConsumerState<QuickCategorizePage> {
               _note.text = tx.note ?? '';
               _categoryId = tx.categoryId;
             }
-            final categories = ref.watch(categoriesProvider).valueOrNull ?? const <Category>[];
+            final categories = ref.watch(categoriesProvider).asData?.value ?? const <Category>[];
             final relevant = categories.where((c) => c.type == (tx.direction == 'in' ? 'income' : 'expense')).toList();
             return ListView(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
