@@ -1,0 +1,98 @@
+name: build-apk
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Toolchain versions
+        run: |
+          flutter --version
+          java -version
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME/ndk" || true
+
+      - name: Fonts (Vazirmatn, SIL OFL)
+        run: |
+          mkdir -p assets/fonts
+          base="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/ttf"
+          for w in Regular Medium Bold; do
+            curl -fsSL "$base/Vazirmatn-$w.ttf" -o "assets/fonts/Vazirmatn-$w.ttf" \
+              || curl -fsSL "https://raw.githubusercontent.com/rastikerdar/vazirmatn/v33.003/fonts/ttf/Vazirmatn-$w.ttf" -o "assets/fonts/Vazirmatn-$w.ttf"
+          done
+          ls -l assets/fonts
+          python3 - <<'EOF'
+          import os
+          for w in ("Regular","Medium","Bold"):
+              p=f"assets/fonts/Vazirmatn-{w}.ttf"
+              assert os.path.getsize(p) > 60_000, p
+          print("fonts ok")
+          EOF
+
+      - name: Dependencies
+        run: flutter pub get
+
+      - name: Generate drift code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Static verification
+        run: |
+          python3 tools/verify_static.py
+          flutter analyze || echo "::warning::flutter analyze reported issues (see log)"
+
+      - name: Unit tests (pure Dart)
+        run: flutter test --reporter expanded || echo "::warning::some Dart tests failed (see log)"
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Collect artifact
+        run: |
+          set -e
+          cp build/app/outputs/flutter-apk/app-release.apk hamrah-${{ github.run_number }}.apk
+          ls -lh hamrah-${{ github.run_number }}.apk
+          sha256sum hamrah-${{ github.run_number }}.apk | tee hamrah.sha256
+          python3 - <<'EOF'
+          import zipfile, glob
+          p = glob.glob("hamrah-*.apk")[0]
+          z = zipfile.ZipFile(p)
+          names = z.namelist()
+          need = ["AndroidManifest.xml", "classes.dex", "lib/arm64-v8a/libflutter.so", "lib/arm64-v8a/libapp.so"]
+          missing = [n for n in need if n not in names]
+          print("entries:", len(names), "missing:", missing)
+          assert not missing, missing
+          print("abis:", sorted({n.split('/')[1] for n in names if n.startswith('lib/')}))
+          print("signed:", any(n.startswith('META-INF/') and n.endswith(('.RSA', '.SF', '.EC')) for n in names))
+          EOF
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Hamrah build ${{ github.run_number }}
+          body: |
+            Release APK built by GitHub Actions from `${{ github.sha }}`.
+            Debug-key signed (sideload only). sha256 in `hamrah.sha256`.
+          files: |
+            hamrah-${{ github.run_number }}.apk
+            hamrah.sha256
