@@ -1,0 +1,2 @@
+# Android layer compile (excluding Flutter-embedding files) against android.jar 36 + androidx + sqlcipher-android 4.6.1
+exit=0

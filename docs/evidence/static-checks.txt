@@ -1,0 +1,67 @@
+PASS  manifest permissions are within the allowed set: ['BLUETOOTH', 'BLUETOOTH_ADMIN', 'BLUETOOTH_CONNECT', 'INTERNET', 'POST_NOTIFICATIONS', 'RECEIVE_BOOT_COMPLETED', 'RECEIVE_SMS', 'RECORD_AUDIO', 'SCHEDULE_EXACT_ALARM', 'USE_BIOMETRIC']
+PASS  network/Bluetooth permissions are removed with tools:node=remove
+PASS  manifest must not declare READ_SMS
+PASS  manifest must not declare READ_CONTACTS
+PASS  manifest must not declare SYSTEM_ALERT_WINDOW
+PASS  manifest must not declare USE_FULL_SCREEN_INTENT
+PASS  manifest must not declare REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+PASS  allowBackup is false
+PASS  fullBackupContent is false
+PASS  dataExtractionRules is set
+PASS  cleartext traffic disabled
+PASS  applicationId is com.hamrah.app
+PASS  compileSdk 36
+PASS  targetSdk 36
+PASS  minSdk 26
+PASS  API 37 is not used
+PASS  sqlite3 build hook uses SQLite3MultipleCiphers
+PASS  pinned dependency present: drift:
+PASS  pinned dependency present: flutter_riverpod:
+PASS  pinned dependency present: go_router:
+PASS  pinned dependency present: speech_to_text:
+PASS  pinned dependency present: shamsi_date:
+PASS  pinned dependency present: timezone:
+PASS  drift table Categories exists
+PASS  drift table Accounts exists
+PASS  drift table RawSms exists
+PASS  drift table Transactions exists
+PASS  drift table MerchantMemory exists
+PASS  drift table Reminders exists
+PASS  drift table ReminderOccurrences exists
+PASS  drift table Settings exists
+PASS  drift table ImportLog exists
+PASS  native table sms_events exists
+PASS  native table tx_events exists
+PASS  native table resolutions exists
+PASS  native table alarms exists
+PASS  native table outcome_events exists
+PASS  native table occurrence_events exists
+PASS  native table snapshot exists
+PASS  native table otp_hints exists
+PASS  native table diag_log exists
+PASS  every Dart method exists in the Kotlin bridge (missing: [])
+PASS  batch includes batchId
+PASS  batch includes contractVersion
+PASS  batch includes sms
+PASS  batch includes transactions
+PASS  batch includes resolutions
+PASS  batch includes outcomes
+PASS  batch includes occurrences
+PASS  batch row key eventUid is emitted by Kotlin
+PASS  batch row key txUid is emitted by Kotlin
+PASS  batch row key smsHash is emitted by Kotlin
+PASS  batch row key occurrenceUid is emitted by Kotlin
+PASS  batch row key scheduledFor is emitted by Kotlin
+PASS  batch row key reason is emitted by Kotlin
+PASS  Dart parses only known batch keys
+PASS  16 fixtures present (found 16)
+PASS  fixture M1 present
+PASS  fixture M6 present
+PASS  fixture B7 present
+PASS  fixture B9 present
+PASS  fixture B10 present
+PASS  Melli verified labels are the only ones accepted
+PASS  Blu OTP shape is recognized for suppression
+PASS  the sample first name never appears in app sources (leaks: [])
+
+ALL 65 STATIC CHECKS PASSED

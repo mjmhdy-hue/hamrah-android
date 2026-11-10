@@ -1,0 +1,18 @@
+# dart 3.13.7 / package:test (pure Dart copy of lib/core/formatting.dart)
+# command: dart test
+00:00 +0: loading test/formatting_test.dart
+00:00 +0: test/formatting_test.dart: (setUpAll)
+00:00 +0: test/formatting_test.dart: money toman hides a zero remainder
+00:00 +1: test/formatting_test.dart: money toman without decimal when divisible by ten
+00:00 +2: test/formatting_test.dart: money rial mode keeps rial
+00:00 +3: test/formatting_test.dart: money grouping of millions
+00:00 +4: test/formatting_test.dart: money persian digits round trip
+00:00 +5: test/formatting_test.dart: jalali vectors 1405-08-01 -> 2026-10-23
+00:00 +6: test/formatting_test.dart: jalali vectors 1405-08-04 -> 2026-10-26
+00:00 +7: test/formatting_test.dart: jalali vectors 1405-08-09 -> 2026-10-31
+00:00 +8: test/formatting_test.dart: jalali vectors 1405-08-15 -> 2026-11-06
+00:00 +9: test/formatting_test.dart: jalali vectors 1405-08-16 -> 2026-11-07
+00:00 +10: test/formatting_test.dart: jalali vectors 1405-08-18 -> 2026-11-09
+00:00 +11: test/formatting_test.dart: tehran times B1 body time is 08:35 UTC
+00:00 +12: test/formatting_test.dart: (tearDownAll)
+00:00 +12: All tests passed!

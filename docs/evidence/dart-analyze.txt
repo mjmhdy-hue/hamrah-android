@@ -1,0 +1,7 @@
+# drift 2.35.4 + drift_dev 2.35.3 codegen (Dart 3.13.7)
+# command: dart run build_runner build
+(generated lib/data/db/app_db.g.dart, 8094 lines)
+
+# dart analyze on data layer + repositories + services + native bridge (flutter stubbed)
+Analyzing cg...
+No issues found!

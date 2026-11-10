@@ -1,0 +1,3 @@
+# kotlinc 2.1.0 / JDK 17.0.21 / Linux aarch64
+# command: kotlinc core/*.kt test/FixtureChecks.kt -include-runtime -d verify.jar && java -cp verify.jar com.hamrah.app.core.FixtureChecks test/fixtures/sms
+ALL FIXTURE CHECKS PASSED (16 fixtures)
