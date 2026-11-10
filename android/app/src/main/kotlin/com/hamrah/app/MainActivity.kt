@@ -45,7 +45,7 @@ class MainActivity : FlutterActivity() {
         val prefs = getSharedPreferences(Contract.PREFS, MODE_PRIVATE)
         prefs.edit().putString(Contract.PREF_PENDING_ROUTE, route).apply()
         com.hamrah.app.bridge.BridgeEvents.pushRoute(route)
-        intent.removeExtra("route")
+        intent?.removeExtra("route")
     }
 }
 
