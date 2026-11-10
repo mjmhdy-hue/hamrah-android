@@ -331,7 +331,7 @@ class _TransactionSheetState extends ConsumerState<_TransactionSheet> {
   }
 
   String formatMoneyShort(int rial) {
-    final unit = ref.read(settingsStreamProvider).asData?.value?['display_unit'] ?? 'toman';
+    final unit = ref.read(settingsStreamProvider).asData?.value['display_unit'] ?? 'toman';
     return unit == 'rial' ? '${faDigits(grouped(rial))} ریال' : '${faDigits(grouped(rial ~/ 10))} تومان';
   }
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../native/native_bridge.dart';
 import '../providers.dart';
 
 class MicButton extends ConsumerStatefulWidget {

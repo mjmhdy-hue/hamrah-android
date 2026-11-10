@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import '../core/formatting.dart';
 import '../core/theme.dart';
 import '../data/db/app_db.dart';
-import '../native/native_bridge.dart';
 import '../providers.dart';
 import '../widgets/common.dart';
 import 'shell.dart';

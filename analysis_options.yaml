@@ -4,6 +4,9 @@ analyzer:
   exclude:
     - lib/**/*.g.dart
     - build/**
+    # Pigeon contract is documentation only (the app ships MethodChannels); it needs the
+    # `pigeon` codegen package which is not a build dependency.
+    - pigeons/**
   language:
     strict-casts: true
     strict-raw-types: true

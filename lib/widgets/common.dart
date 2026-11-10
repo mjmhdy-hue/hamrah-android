@@ -58,7 +58,7 @@ class AmountText extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final unit = unitFrom(ref.watch(settingsStreamProvider).asData?.value);
-    final hide = ref.watch(settingsStreamProvider).asData?.value?['hide_amounts_always'] == '1';
+    final hide = ref.watch(settingsStreamProvider).asData?.value['hide_amounts_always'] == '1';
     final theme = Theme.of(context);
     final color = direction == 'in' ? HamrahColors.income : HamrahColors.expense;
     final base = style ?? (large ? theme.textTheme.headlineSmall : theme.textTheme.titleMedium);
