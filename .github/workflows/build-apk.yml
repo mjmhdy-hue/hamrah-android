@@ -67,10 +67,10 @@ jobs:
       - name: Static verification
         run: |
           python3 tools/verify_static.py
-          flutter analyze || echo "::warning::flutter analyze reported issues (see log)"
+          flutter analyze
 
       - name: Unit tests (pure Dart)
-        run: flutter test --reporter expanded || echo "::warning::some Dart tests failed (see log)"
+        run: flutter test --reporter expanded
 
       - name: Build release APK
         run: flutter build apk --release
