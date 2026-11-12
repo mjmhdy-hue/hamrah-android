@@ -1,3 +1,4 @@
+import java.util.Base64
 import java.util.Properties
 
 plugins {
@@ -39,11 +40,21 @@ android {
                 "(see docs/SIGNING.md). Refusing to fall back to a debug signature."
         )
     }
+    // The keystore is committed as base64 text (see docs/SIGNING.md) because the repo write path
+    // only accepts text; decode it into the build directory before signing.
+    val keystoreB64 = rootProject.file(keystoreProperties.getProperty("storeFile") + ".b64")
+    if (!keystoreB64.exists()) {
+        throw GradleException("${keystoreB64.path} is missing: release builds require the project keystore.")
+    }
+    val keystoreFile = rootProject.layout.buildDirectory.file("keystore/hamrah-release.p12").get().asFile
+    keystoreFile.parentFile.mkdirs()
+    keystoreFile.writeBytes(Base64.getDecoder().decode(keystoreB64.readText()))
+
     signingConfigs {
         create("release") {
             keyAlias = keystoreProperties.getProperty("keyAlias")
             keyPassword = keystoreProperties.getProperty("keyPassword")
-            storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+            storeFile = keystoreFile
             storePassword = keystoreProperties.getProperty("storePassword")
             storeType = keystoreProperties.getProperty("storeType", "PKCS12")
             enableV1Signing = true
