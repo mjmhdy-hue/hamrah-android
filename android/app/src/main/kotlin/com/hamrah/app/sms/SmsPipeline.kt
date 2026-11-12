@@ -8,6 +8,7 @@ import android.util.Log
 import com.hamrah.app.DiagCodes
 import com.hamrah.app.core.Direction
 import com.hamrah.app.core.Normalizer
+import com.hamrah.app.core.ParseOutcome
 import com.hamrah.app.core.ParseStatus
 import com.hamrah.app.core.SmsParser
 import com.hamrah.app.db.NativeInboxDb
@@ -35,22 +36,33 @@ class SmsPipeline(private val context: Context) {
             val normalized = Normalizer.normalize(body)
             if (normalized.isBlank()) return
             val hash = Normalizer.smsHash(canonical, normalized)
+            // F03/F04: classify and redact BEFORE the first durable write. An OTP body is stored
+            // only in its masked form and a Blu body loses the greeting name, so no code digits or
+            // customer name ever reach a database, WAL frame or exported batch.
+            val outcome = SmsParser.parse(address, normalized, receivedAt)
+            val storedBody = Normalizer.redactPersonal(
+                if (outcome.status == ParseStatus.OTP) outcome.persistedBody else normalized
+            )
             val eventUid = UUID.randomUUID().toString()
             val stored = db.insertSmsEvent(
                 eventUid = eventUid,
                 senderRaw = address,
                 senderCanon = canonical,
-                body = normalized,
+                body = storedBody,
                 receivedAt = receivedAt,
                 partCount = partCount,
-                hash = hash
+                hash = hash,
+                parseStatus = statusOf(outcome.status),
+                bankCode = outcome.bankCode,
+                templateId = outcome.templateId,
+                errorCode = outcome.errorCode
             )
             if (!stored) {
                 db.logEvent(DiagCodes.SMS_DUPLICATE, hash.take(8))
                 return
             }
             db.logEvent(DiagCodes.SMS_RECEIVED, "$partCount:${hash.take(8)}")
-            evaluate(eventUid, address, receivedAt, snapshot, normalized, hash)
+            evaluate(eventUid, address, receivedAt, snapshot, normalized, hash, outcome)
         } catch (e: Exception) {
             Log.w("SmsPipeline", "processing failed", e)
             db.logEvent("sms_error", e.javaClass.simpleName)
@@ -60,7 +72,16 @@ class SmsPipeline(private val context: Context) {
     fun reprocess(eventUid: String, address: String, receivedAt: Long, normalized: String) {
         val snapshot = NativeSnapshot.parse(db.snapshotJson())
         val hash = Normalizer.smsHash(Normalizer.canonicalSender(address), normalized)
-        evaluate(eventUid, address, receivedAt, snapshot, normalized, hash)
+        if (normalized.isBlank()) return
+        val outcome = SmsParser.parse(address, normalized, receivedAt)
+        db.updateSmsParse(eventUid, statusOf(outcome.status), outcome.bankCode, outcome.templateId, outcome.errorCode)
+        evaluate(eventUid, address, receivedAt, snapshot, normalized, hash, outcome)
+    }
+
+    private fun statusOf(status: ParseStatus): String = when (status) {
+        ParseStatus.PARSED -> "parsed"
+        ParseStatus.OTP -> "otp"
+        ParseStatus.UNRECOGNIZED -> "unrecognized"
     }
 
     private fun evaluate(
@@ -69,9 +90,9 @@ class SmsPipeline(private val context: Context) {
         receivedAt: Long,
         snapshot: NativeSnapshot,
         normalized: String,
-        hash: String
+        hash: String,
+        outcome: ParseOutcome
     ) {
-        val outcome = SmsParser.parse(address, normalized, receivedAt)
         when (outcome.status) {
             ParseStatus.PARSED -> {
                 var tx = outcome.tx ?: return
@@ -118,7 +139,7 @@ class SmsPipeline(private val context: Context) {
                 }
             }
             ParseStatus.OTP -> {
-                db.updateSmsParse(eventUid, "otp", outcome.bankCode, outcome.templateId, null, body = outcome.persistedBody)
+                db.updateSmsParse(eventUid, "otp", outcome.bankCode, outcome.templateId, null)
                 SmsParser.parseBluOtpHint(normalized, receivedAt)?.let { hint ->
                     db.insertOtpHint(hint.merchant, hint.amountRial, hint.hintTime)
                 }
@@ -126,7 +147,7 @@ class SmsPipeline(private val context: Context) {
                 db.logEvent(DiagCodes.SMS_OTP_SUPPRESSED, hash.take(8))
             }
             ParseStatus.UNRECOGNIZED -> {
-                db.updateSmsParse(eventUid, "unrecognized", outcome.bankCode, null, outcome.errorCode, body = outcome.persistedBody)
+                db.updateSmsParse(eventUid, "unrecognized", outcome.bankCode, null, outcome.errorCode)
                 db.logEvent(DiagCodes.SMS_UNRECOGNIZED, outcome.errorCode)
             }
         }

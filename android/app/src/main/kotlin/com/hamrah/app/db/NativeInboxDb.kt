@@ -22,7 +22,7 @@ class NativeInboxDb(private val context: Context) {
     companion object {
         private const val TAG = "NativeInboxDb"
         private const val DB_NAME = "native_inbox.db"
-        private const val SCHEMA_VERSION = 1
+        private const val SCHEMA_VERSION = 2
     }
 
     private var db: SQLiteDatabase? = null
@@ -54,6 +54,7 @@ class NativeInboxDb(private val context: Context) {
                 opened.beginTransaction()
                 try {
                     createSchema(opened)
+                    if (version in 1 until 2) migrateV1ToV2(opened)
                     opened.execSQL("PRAGMA user_version = $SCHEMA_VERSION")
                     opened.setTransactionSuccessful()
                 } finally {
@@ -77,6 +78,21 @@ class NativeInboxDb(private val context: Context) {
         db = null
     }
 
+    /**
+     * v1 -> v2. v1 stored SMS rows without any delivery state, while drainEvents() marked them with
+     * `UPDATE sms_events SET batch_id = ?`, so every drain failed with "no such column". Rows already
+     * present are kept and delivered once (delivered defaults to 0).
+     */
+    private fun migrateV1ToV2(d: SQLiteDatabase) {
+        val columns = HashSet<String>()
+        d.rawQuery("PRAGMA table_info(sms_events)", null).use { c ->
+            while (c.moveToNext()) columns.add(c.getString(c.getColumnIndexOrThrow("name")))
+        }
+        if ("batch_id" !in columns) d.execSQL("ALTER TABLE sms_events ADD COLUMN batch_id TEXT")
+        if ("delivered" !in columns) d.execSQL("ALTER TABLE sms_events ADD COLUMN delivered INTEGER NOT NULL DEFAULT 0")
+        d.execSQL("CREATE INDEX IF NOT EXISTS idx_sms_delivered ON sms_events(delivered, received_at)")
+    }
+
     private fun createSchema(d: SQLiteDatabase) {
         d.execSQL(
             """
@@ -93,12 +109,15 @@ class NativeInboxDb(private val context: Context) {
                 error_code TEXT,
                 hash TEXT NOT NULL UNIQUE,
                 notified INTEGER NOT NULL DEFAULT 0,
-                created_at INTEGER NOT NULL
+                created_at INTEGER NOT NULL,
+                batch_id TEXT,
+                delivered INTEGER NOT NULL DEFAULT 0
             )
             """.trimIndent()
         )
         d.execSQL("CREATE INDEX IF NOT EXISTS idx_sms_received ON sms_events(received_at)")
         d.execSQL("CREATE INDEX IF NOT EXISTS idx_sms_status ON sms_events(parse_status)")
+        d.execSQL("CREATE INDEX IF NOT EXISTS idx_sms_delivered ON sms_events(delivered, received_at)")
         d.execSQL(
             """
             CREATE TABLE IF NOT EXISTS tx_events(
@@ -226,6 +245,10 @@ class NativeInboxDb(private val context: Context) {
 
     // ---------------------------------------------------------------- sms events
 
+    /**
+     * [body] must already be sanitized (OTP digits and the Blu greeting name are removed before the
+     * first durable write) and [parseStatus] is the classification that was computed in memory.
+     */
     fun insertSmsEvent(
         eventUid: String,
         senderRaw: String,
@@ -233,7 +256,11 @@ class NativeInboxDb(private val context: Context) {
         body: String,
         receivedAt: Long,
         partCount: Int,
-        hash: String
+        hash: String,
+        parseStatus: String,
+        bankCode: String?,
+        templateId: String?,
+        errorCode: String?
     ): Boolean {
         val values = ContentValues().apply {
             put("event_uid", eventUid)
@@ -242,7 +269,10 @@ class NativeInboxDb(private val context: Context) {
             put("body", body)
             put("received_at", receivedAt)
             put("part_count", partCount)
-            put("parse_status", "received")
+            put("parse_status", parseStatus)
+            put("bank_code", bankCode)
+            put("template_id", templateId)
+            put("error_code", errorCode)
             put("hash", hash)
             put("created_at", System.currentTimeMillis())
         }
@@ -572,12 +602,8 @@ class NativeInboxDb(private val context: Context) {
         try {
             val sms = ArrayList<Map<String, Any?>>()
             db.rawQuery(
-                "SELECT * FROM sms_events WHERE event_uid IN (" +
-                    "SELECT sms_event_uid FROM tx_events WHERE imported = 0 LIMIT ?" +
-                    ") OR (parse_status IN ('unrecognized','otp') AND event_uid IN (" +
-                    "SELECT event_uid FROM sms_events WHERE parse_status IN ('unrecognized','otp') " +
-                    "ORDER BY received_at DESC LIMIT ?))",
-                arrayOf(limit.toString(), limit.toString())
+                "SELECT * FROM sms_events WHERE delivered = 0 ORDER BY received_at ASC, created_at ASC LIMIT ?",
+                arrayOf(limit.toString())
             ).use { c ->
                 while (c.moveToNext()) sms.add(mapOf(
                     "eventUid" to c.getString(c.getColumnIndexOrThrow("event_uid")),
@@ -693,7 +719,8 @@ class NativeInboxDb(private val context: Context) {
             for (table in listOf("tx_events", "resolutions", "outcome_events", "occurrence_events")) {
                 db.execSQL("UPDATE $table SET imported = 1 WHERE batch_id = ? AND imported = 0", arrayOf(batchId))
             }
-            // sms_events has no imported column: the hash stays as the permanent dedupe record.
+            // SMS rows keep their permanent hash as the dedupe record; delivered only gates the cursor.
+            db.execSQL("UPDATE sms_events SET delivered = 1 WHERE batch_id = ? AND delivered = 0", arrayOf(batchId))
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()

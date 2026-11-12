@@ -21,6 +21,18 @@ object Normalizer {
         0xFEFF                  // BOM
     )
 
+    /** Blu sentences start with "<first name> عزیز،" — the name must never reach storage. */
+    private val GREETING = Regex("^.*?\\s*عزیز،")
+
+    /**
+     * Removes the customer's first name from every line of an already-normalized body.
+     * Call it *after* parsing: templates match the original text, storage gets the sanitized one.
+     */
+    fun redactPersonal(body: String): String {
+        if (body.isEmpty()) return body
+        return body.split('\n').joinToString("\n") { it.replace(GREETING, "کاربر عزیز،") }
+    }
+
     fun normalize(raw: String): String {
         if (raw.isEmpty()) return ""
         val sb = StringBuilder(raw.length)
