@@ -48,7 +48,7 @@ android {
     }
     val keystoreFile = rootProject.layout.buildDirectory.file("keystore/hamrah-release.p12").get().asFile
     keystoreFile.parentFile.mkdirs()
-    keystoreFile.writeBytes(Base64.getDecoder().decode(keystoreB64.readText()))
+    keystoreFile.writeBytes(Base64.getMimeDecoder().decode(keystoreB64.readText()))
 
     signingConfigs {
         create("release") {
