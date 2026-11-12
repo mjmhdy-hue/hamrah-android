@@ -69,6 +69,19 @@ class NativeSnapshot private constructor(
             "حقوق" to "حقوق"
         )
 
+        /** Fail-closed snapshot: nothing is whitelisted, so no SMS is accepted or notified. */
+        val BLOCK_ALL = NativeSnapshot(
+            categories = emptyList(),
+            memory = emptyMap(),
+            whitelist = emptyList(),
+            displayUnit = "toman",
+            hideAmounts = false,
+            rolloverTime = "23:59",
+            defaultFollowupCount = 2,
+            defaultFollowupIntervalMin = 15,
+            contractVersion = 1
+        )
+
         val DEFAULT = NativeSnapshot(
             categories = emptyList(),
             memory = emptyMap(),
@@ -84,6 +97,10 @@ class NativeSnapshot private constructor(
             contractVersion = 1
         )
 
+        /**
+         * Whitelist semantics (F26): a missing snapshot means first run -> seed defaults; an
+         * explicitly empty list means "receive nothing"; anything unreadable fails closed.
+         */
         fun parse(json: String?): NativeSnapshot {
             if (json.isNullOrBlank()) return DEFAULT
             return try {
@@ -118,7 +135,10 @@ class NativeSnapshot private constructor(
                         )
                     }
                 }
-                if (whitelist.isEmpty()) whitelist.addAll(DEFAULT.whitelist)
+                if (root.isNull("whitelist") || !root.has("whitelist")) {
+                    whitelist.clear()
+                    whitelist.addAll(DEFAULT.whitelist)
+                }
                 val settings = root.optJSONObject("settings")
                 NativeSnapshot(
                     categories = categories,
@@ -132,7 +152,8 @@ class NativeSnapshot private constructor(
                     contractVersion = root.optInt("contractVersion", 1)
                 )
             } catch (e: Exception) {
-                DEFAULT
+                // Fail closed: an unreadable snapshot must not silently re-enable bank senders.
+                BLOCK_ALL
             }
         }
 
