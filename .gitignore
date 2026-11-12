@@ -11,7 +11,11 @@ lib/data/db/app_db.g.dart
 
 # Local machine paths
 android/local.properties
-android/key.properties
+# The project's sideload signing material is intentionally committed so CI and the owner produce
+# installable updates with the same certificate (see docs/SIGNING.md). Replace it with CI secrets
+# before any public distribution.
+!android/key.properties
+!android/keystore/
 *.jks
 *.keystore
 

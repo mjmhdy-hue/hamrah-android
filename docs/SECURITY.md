@@ -48,3 +48,9 @@ the UI text.
   defense against a fully compromised OS.
 - The speech service is supplied by the device vendor; its privacy behaviour is outside the app's
   control and is disclosed to the user before first use.
+
+## Release signing (see docs/SIGNING.md)
+
+The sideload keystore (`android/keystore/hamrah-release.p12`, `CN=Hamrah`) is committed so CI and the
+owner produce byte-identical signers and updates install in place. It protects APK integrity only and
+grants no access to user data; it must be replaced with a secret-managed key before store distribution.

@@ -35,24 +35,29 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // F02: a release build must be signed with the project keystore. Without it the APK cannot be
+    // installed over the previous one, so a missing keystore is a build error, never a debug fallback.
+    if (!keystorePropertiesFile.exists()) {
+        throw GradleException(
+            "android/key.properties is missing: release builds require the project keystore " +
+                "(see docs/SIGNING.md). Refusing to fall back to a debug signature."
+        )
+    }
     signingConfigs {
-        if (keystorePropertiesFile.exists()) {
-            create("release") {
-                keyAlias = keystoreProperties["keyAlias"] as String
-                keyPassword = keystoreProperties["keyPassword"] as String
-                storeFile = file(keystoreProperties["storeFile"] as String)
-                storePassword = keystoreProperties["storePassword"] as String
-            }
+        create("release") {
+            keyAlias = keystoreProperties.getProperty("keyAlias")
+            keyPassword = keystoreProperties.getProperty("keyPassword")
+            storeFile = file(keystoreProperties.getProperty("storeFile"))
+            storePassword = keystoreProperties.getProperty("storePassword")
+            storeType = keystoreProperties.getProperty("storeType", "PKCS12")
+            isV1SigningEnabled = true
+            isV2SigningEnabled = true
         }
     }
 
     buildTypes {
         release {
-            signingConfig = if (keystorePropertiesFile.exists()) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
-            }
+            signingConfig = signingConfigs.getByName("release")
             // Kept off for the sideloaded MVP: R8 cannot be validated without a device here,
             // and the Kotlin bridge/SQLCipher path is correctness-critical. Turn on later.
             isMinifyEnabled = false
